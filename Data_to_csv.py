@@ -155,11 +155,12 @@ def Get_params_init_from_file(video_title, summary_dir, task_dir, exp_data_name,
 def Save_deepviz_data_as_csv(result_path, exp_data_name, task_dir, task_type, set_header=False, debug=False, device=torch.device('cuda:0' if torch.cuda.is_available() else 'cpu'), save_weight_mat=False, calculate_NTK=False, existing_row_num=0, summary_dir="Summaries", add_new_columns=False, only_last_t=True, calculate_per_num=10, calculate_all_metrics=False, get_init_from_expname_list=False):
     status = -1
 
+    task_type = task_type.lower()
     if task_type == "pre":
         deepviz = DeepVisuals_Pre()
         deepviz.Load_data(exp_data_name, data_folder=os.path.join(summary_dir, task_dir))
         status = 0
-    elif task_type == "2d":
+    elif task_type in "2d":
         try:
             deepviz = DeepVisuals_2D(data_folder=os.path.join(summary_dir, task_dir))
             status = deepviz.Load_data(exp_data_name)
@@ -442,7 +443,7 @@ def Save_deepviz_data_as_csv(result_path, exp_data_name, task_dir, task_type, se
         BP_density_range = BP_density_range_dim_1 = BP_density_range_dim_2 = np.nan
         BP_G_entropy = BP_G_1_entropy = BP_G_2_entropy = BP_D_entropy = np.nan
         affine_BP_G_prop = np.nan
-        if ((add_new_columns) or calculate_all_metrics) and (is_last_t or t == 0 or (not only_last_t)) and arch == "mlp":
+        if ((not add_new_columns) or calculate_all_metrics) and (is_last_t or t == 0 or (not only_last_t)) and arch == "mlp":
             """ Generator """
             if BP_directions_G is None or BP_signed_distances_G is None or BP_delta_slopes_G is None:
                 BP_directions_G, BP_signed_distances_G, BP_delta_slopes_G = Get_BP_params(state_dict_G["hidden_layer.weight"], state_dict_G["hidden_layer.bias"], state_dict_G["output_layer.weight"])
@@ -637,8 +638,8 @@ def Save_deepviz_data_as_csv(result_path, exp_data_name, task_dir, task_type, se
         update_params_D_tot_norm_mean = np.nan
         update_params_D_tot_norm_std = np.nan
 
-        # if state_dict_G is not None and state_dict_D is not None and (not add_new_columns or calculate_all_metrics):
-        if state_dict_G is not None and state_dict_D is not None and (add_new_columns or calculate_all_metrics):
+        if state_dict_G is not None and state_dict_D is not None and (not add_new_columns or calculate_all_metrics):
+        # if state_dict_G is not None and state_dict_D is not None and (add_new_columns or calculate_all_metrics):
             params_G = torch.cat([_.flatten() for _ in G.parameters()]).view(1, -1)
             params_D = torch.cat([_.flatten() for _ in D.parameters()]).view(1, -1)
 
@@ -873,7 +874,7 @@ def Save_deepviz_data_as_csv(result_path, exp_data_name, task_dir, task_type, se
         ntk_G_centered_effective_rank = ntk_D_centered_effective_rank = np.nan
         if (total_row_num > existing_row_num) \
                 and (state_dict_G is not None and state_dict_D is not None) \
-                and ((add_new_columns) or calculate_all_metrics) and arch == "mlp":
+                and ((not add_new_columns) or calculate_all_metrics) and arch == "mlp":
 
             ntk_G_centered = Get_NTK_using_nngeometry(G, args.x_dim, z_test_torch_no_grad, centering=True)
             ntk_D_centered = Get_NTK_using_nngeometry(D, 1, x_test_torch_no_grad, centering=True)
@@ -987,7 +988,7 @@ def Save_deepviz_data_as_csv(result_path, exp_data_name, task_dir, task_type, se
                 print("KL_mode", KL_mode)
                 prop_neg_samples = pred_classes_count[-1] / x_test_torch.shape[0]
 
-                if (not add_new_columns) or calculate_all_metrics:
+                if (add_new_columns) or calculate_all_metrics:
                     pred_labels = np.argmax(pred_probs, axis=1)
 
                     mode_to_z_dict = {}
@@ -1085,91 +1086,7 @@ if __name__ == "__main__":
     parser.add_argument("--get_init_from_expname_list", action='store_true', help="whether to get_init_from_expname_list")
 
     args = parser.parse_args()
-
-
-    task_dir = "step_alt-act"
-    # task_dir = "grid5_simgd_alpha_exp"
-    # task_dir = "random9-6_2_alpha_exp"
-    # task_dir = "simgd_fr_alphaD_seed0-1-2"
-    task_dir = "simgd_fr_cgd_alpha_seed0-1-2"
-    task_dir = "simgd_fr_fr2_fr3_cgd_alpha_seed0-1-2"
-    task_dir = "simgd_sgd_alphaD_seed0-1-2-3-4_test"
-    task_dir = "simgd_sgd_alphaG_seed0-1-2-3-4"
-    # task_dir = "simgd_sgd_alphaD_seed0-1-2-3-4"
-    # task_dir = "simgd_sgd_widthG_seed0-1-2-3-4"
-    # task_dir = "simgd_sgd_widthD_seed0-1-2-3-4"
-    # task_dir = "simgd_sgd_alphaG_lr0.000316_seed0-1-2-3-4"
-    # task_dir = "simgd_sgd_alphaD_lr0.000316_seed0-1-2-3-4"
-    # task_dir = "simgd_rmsprop_alphaG_seed0-1-2-3-4"
-    # task_dir = "simgd_rmsprop_alphaD_seed0-1-2-3-4"
-    # task_dir = "MNIST_width"
-    # task_dir = "MNIST_01"
-    # task_dir = "MNIST_01_alpha"
-    # task_dir = "MNIST_01_alpha_seed0"
-    task_dir = "simgd_rmsprop-x-y-alphaG-D-seed0-1-2-3-4"
-    # task_dir = "Dec18_simgd_sgd_seed01234_widthGD-512"
-    # task_dir = "Dec20_simgd_sgd_seed01234_width-both-G-D-32-64-128-256-512-1024-2048"
-    # task_dir = "Dec31_simgd_rmsprop-x-y_seed01234_alpha1"
-    task_dir = "Jan05_simgd_rmsprop_seed01234_width-both-G-D-32-64-128-256-512-1024-2048"
-    task_dir = "Jan08_simgd_sgd_seed01234_width-both-G-D-32-64-128-256-512-1024-2048_lr0.01-0.00316-0.001-0.000316-0.0001-0.0000316-0.00001"
-    task_dir = "Jan12_simgd_rmsprop_seed01234_widthGD-128-512"
-    task_dir = "Jan08_simgd_grid5_sgd_seed01234_width-both-G-D-128-512_lr0.01-0.00316-0.001-0.000316-0.0001-0.0000316-0.00001"
-    task_dir = "Jan06_simgd_rmsprop_seed01234_width-both-G-D-32-64-128-256-512-1024-2048_lr0.01-0.00316-0.000316-0.0001-0.0000316-0.00001"
-    task_dir = "Jan18_simgd_rmsprop_seed01234_widthGD-128-512_gamma0.02-0.04-0.06-0.08"
-    task_dir = "Jan25_grid5_simgd_rmsprop_seed01234_widthGD-128_zeta0-0.2-0.4-0.6-0.8-1.0"
-    task_dir = "Jan26_grid5_simgd_rmsprop_seed0_widthGD-128_zeta0.2-0.4-0.6-0.8"
-    task_dir = "Jan27_simgd_rmsprop-1-gamma0.8-0.9-0.99-0.999-0.9999_seed01234_widthGD-32-64-128-256-512-1024-2048_lr0.001-0.000316-0.0001-0.0000316-0.00001"
-    # task_dir = "H128_sgd_seed01234"
-    # task_dir = "H2048_sgd_seed01234"
-    # task_dir = "H512_sgd_seed01234"
-    # task_dir = "H32_sgd_seed01234"
-    task_dir = "Feb11_separated_simgd_rmsprop-1-gamma0.8-0.9-0.99-0.999-0.9999-1_seed01234_widthGD-32-64-128-256-512-1024-2048_lr0.001-0.000316-0.0001-0.0000316-0.00001"
-    # task_dir = "Feb15_grid5-2-0.01_simgd_rmsprop-1-gamma0.8-0.9-0.99-0.999-0.9999-1_seed01234_widthGD-32-64-128-256-512-1024-2048_lr0.001-0.000316-0.0001-0.0000316-0.00001"
-    # task_dir = "Jan08_simgd_sgd_seed01234_width-both-G-D-32-64-128-256-512-1024-2048_lr0.01-0.00316-0.001-0.000316-0.0001-0.0000316-0.00001"
-
-    # task_dir = "Feb19_separated_simgd_rmsprop-1-gamma0.8-0.9-0.99-0.999-0.9999-1_seed01234_widthGD-4096-8192-16384_lr0.001-0.000316-0.0001-0.0000316-0.00001"
-    # task_dir = "Feb19_grid5-2-0.01_simgd_rmsprop-1-gamma0.8-0.9-0.99-0.999-0.9999-1_seed01234_widthGD-128-256-512-1024-2048_lr0.00000316-0.000001"
-
-    # task_dir = "Jan27_simgd_rmsprop-1-gamma0.8-0.9-0.99-0.999-0.9999_seed01234_widthGD-32-64-128-256-512-1024-2048_lr0.001-0.000316-0.0001-0.0000316-0.00001"
-    task_dir = "Mar17_grid5_simgd_rmsprop-1-gamma0.999-1_seed01234_widthGD-32-128-512-2048_lr0.001-0.000316-0.0001-0.0000316-0.00001_alpha0.001-0.01-0.1-10-100-1000"
-    # task_dir = "Mar14_separated_simgd_rmsprop-1-gamma0.999-1_seed01234_widthGD-32-128-512-2048_lr0.001-0.000316-0.0001-0.0000316-0.00001_alpha0.001-0.01-0.1-10-100-1000"
-    # task_dir = "Mar19_random_simgd_rmsprop-1-gamma0.999-1_seed01234_widthGD-32-128-512-2048_lr0.001-0.000316-0.0001-0.0000316-0.00001_alpha0.001-0.01-0.1-10-100-1000"
-    # task_dir = "Mar22_simgd_rmsprop-1-gamma1_seed01234_width-dmlp_g-GD-20-80-320-1280_lr0.001-0.000316-0.0001-0.0000316-0.00001"
-    # task_dir = "Mar22_grid2_simgd_rmsprop-1-gamma0.999-1_seed01234_widthGD-32-128-512-2048_lr0.001-0.000316-0.0001-0.0000316-0.00001_alpha0.001-0.01-0.1-10-100-1000"
-    task_dir = "Apr02_grid5-grid2-random_simgd_rmsprop-1-gamma0.8-0.9-0.99-0.999-0.9999-1_seed01234_widthGD-4096-8192-16384_lr0.001-0.000316-0.0001-0.0000316-0.00001"
-
-
-    # task_dir = "Jan27_grid_simgd_rmsprop-1-gamma0.8-0.9-0.99-0.999-0.9999-1_seed01234_widthGD-32-64-128-256-512-1024-2048_lr0.001-0.000316-0.0001-0.0000316-0.00001"
-    # task_dir = "Jan27_random_simgd_rmsprop-1-gamma0.8-0.9-0.99-0.999-0.9999-1_seed01234_widthGD-32-64-128-256-512-1024-2048_lr0.001-0.000316-0.0001-0.0000316-0.00001"
-    # task_dir = "Feb11_separated_simgd_rmsprop-1-gamma0.8-0.9-0.99-0.999-0.9999-1_seed01234_widthGD-32-64-128-256-512-1024-2048_lr0.001-0.000316-0.0001-0.0000316-0.00001"
-
-    # task_dir = "Apr02_grid_simgd_rmsprop-1-gamma0.8-0.9-0.99-0.999-0.9999-1_seed01234_widthGD-4096-8192-16384_lr0.001-0.000316-0.0001-0.0000316-0.00001"
-
-
-    # task_dir = "Apr14_grid_simgd_rmsprop-1-gamma0.999-1_seed01234_widthGD-256-2048_lr0.1-0.01-0.001-0.0001-0.00001-0.000001-0.0000001_lazy-alphaGD-0.01-0.0316-0.1-0.316-1-3.16-10-31.6-100"
-    task_dir = "Apr14_grid5_simgd_rmsprop-1-gamma0.999-1_seed01234_widthG-1024-D-64-128-256-512-1024-2048-4096-8192-16384_lr0.001-0.000316-0.0001-0.0000316-0.00001-0.00000316-0.000001"
-    task_dir = "Apr11_grid5_simgd_rmsprop-1-gamma0.999-1_seed01234_widthG-64-128-256-512-1024-2048-4096-8192-16384-D-4096_lr0.001-0.000316-0.0001-0.0000316-0.00001-0.00000316-0.000001"
-    task_dir = "Apr11_grid5_simgd_rmsprop-1-gamma0.999-1_seed01234_widthG-64-128-256-512-1024-2048-4096-8192-16384-D-4096_lr0.001-0.000316-0.0001-0.0000316-0.00001-0.00000316-0.000001"
-    task_dir = "Apr18_grid5_simgd_rmsprop-1-gamma0.999-1_seed01234_widthG-64-128-256-512-1024-2048-4096-8192-16384-D-1024_lr0.001-0.000316-0.0001-0.0000316-0.00001-0.00000316-0.000001"
-    # task_dir = "Apr02_grid_simgd_rmsprop-1-gamma0.8-0.9-0.99-0.999-0.9999-1_seed01234_widthGD-4096-8192-16384_lr0.001-0.000316-0.0001-0.0000316-0.00001"
-    # task_dir = "Apr02_random_simgd_rmsprop-1-gamma0.8-0.9-0.99-0.999-0.9999-1_seed01234_widthGD-4096-8192-16384_lr0.001-0.000316-0.0001-0.0000316-0.00001"
-    # task_dir = "Apr02_grid2_simgd_rmsprop-1-gamma0.8-0.9-0.99-0.999-0.9999-1_seed01234_widthGD-4096-8192-16384_lr0.001-0.000316-0.0001-0.0000316-0.00001"
-    # task_dir = "Apr02_separated_simgd_rmsprop-1-gamma0.8-0.9-0.99-0.999-0.9999-1_seed01234_widthGD-4096-8192-16384_lr0.001-0.000316-0.0001-0.0000316-0.00001"
-
-    """ new BP metrics """
-    task_dir = "Jan27_grid_simgd_rmsprop-1-gamma0.8-0.9-0.99-0.999-0.9999-1_seed01234_widthGD-32-64-128-256-512-1024-2048_lr0.001-0.000316-0.0001-0.0000316-0.00001"
-    # task_dir = "Apr02_grid_simgd_rmsprop-1-gamma0.8-0.9-0.99-0.999-0.9999-1_seed01234_widthGD-4096-8192-16384_lr0.001-0.000316-0.0001-0.0000316-0.00001"
-    # task_dir = "Apr02_random_simgd_rmsprop-1-gamma0.8-0.9-0.99-0.999-0.9999-1_seed01234_widthGD-4096-8192-16384_lr0.001-0.000316-0.0001-0.0000316-0.00001"
-    # task_dir = "Apr14_grid5_simgd_rmsprop-1-gamma0.999-1_seed01234_widthG-1024-D-64-128-256-512-1024-2048-4096-8192-16384_lr0.001-0.000316-0.0001-0.0000316-0.00001-0.00000316-0.000001"
-
-    """ mnist """
-    # task_dir = "Mar31_mnist_rmsprop-1-gamma0.999-1_bfn8-16-32-64-128-256-512_lr0.0001-0.0000316-0.00001-0.00000316-0.000001-0.000000316-0.0000001_seed0-1-2"
-    # task_dir = "Apr26_mnist_rmsprop-1-gamma0.999-1_bfn32_lr0.001----0.00000001_lazyalphaGD-0.01-0.0316-0.1-0.316-1-3.16-10-31.6-100_seed0-1-2_b3"
-
-    """ cifar """
-    task_dir = "May20-25_cifar10_rmsprop-1-gamma0.999-1_bfn8-16-32-64_lr0.0001-0.0000316-0.00001-0.00000316-0.000001-0.000000316-0.0000001_seed0-1-2"
-    task_dir = "May20-25_cifar10"
-
+    task_dir = "GAN_training_results_examples"
 
     if args.task_type == "":
         if task_dir.split("_")[1] in ["mnist", "cifar", "cifar10"]:
@@ -1179,13 +1096,8 @@ if __name__ == "__main__":
     else:
         task_type = args.task_type
 
-    # task_type = "pre"
-    # task_type = "2d"
-    # task_type = "real"
 
     summary_dir = "Summaries"
-    # summary_dir = "D:\GAN-Training-Dynamics-II\Summaries"
-    summary_dir = "D:\Backup\GAN-Training-Dynamic\Summaries"
 
     if args.summary_dir != "":
         summary_dir = args.summary_dir
@@ -1193,23 +1105,12 @@ if __name__ == "__main__":
     if args.task_dir != "":
         task_dir = args.task_dir
 
-    debug = True
     debug = False
-
-    save_weight_mat = True
     save_weight_mat = False
-
-    append_to_csv = True
     append_to_csv = False
-
-    calculate_all_metrics = True
     calculate_all_metrics = False
-
-    add_new_columns = True
-    # add_new_columns = False
-
+    add_new_columns = False
     only_last_t = True
-    # only_last_t = False
 
     calculate_per_num = 10
 

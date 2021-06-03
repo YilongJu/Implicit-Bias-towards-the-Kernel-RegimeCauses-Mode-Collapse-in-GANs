@@ -1,0 +1,1 @@
+python Data_to_csv.py --task_type 2D --summary_dir Summaries --task_dir GAN_training_results_examples

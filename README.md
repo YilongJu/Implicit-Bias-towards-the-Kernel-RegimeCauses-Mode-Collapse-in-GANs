@@ -1,10 +1,8 @@
 >📋  A template README.md for code accompanying a Machine Learning paper
 
-# My Paper Title
+# Implicit Bias towards the Kernel RegimeCauses Mode Collapse in GANs
 
-This repository is the official implementation of [My Paper Title](https://arxiv.org/abs/2030.12345).
-
->📋  Optional: include a graphic explaining your approach/main result, bibtex entry, link to demos, blog posts and tutorials
+This repository is the official implementation of Implicit Bias towards the Kernel RegimeCauses Mode Collapse in GANs.
 
 ## Requirements
 
@@ -13,50 +11,47 @@ To install requirements:
 ```setup
 pip install -r requirements.txt
 ```
+Synthetic datasets will be automatically generated. And MNIST will be automatically downloaded.
 
->📋  Describe how to set up the environment, e.g. pip/conda/docker commands, download datasets, etc...
+## Main Steps
+There are 3 main steps of this work: 1) training GANs with different hyperparameters, 2) Compute metrics of interest from the results, and 3) create figures or perform causal analysis on the results. We will introduce accordingly. 
 
 ## Training
 
-To train the model(s) in the paper, run this command:
+To train the model(s) in the paper, we provide example scripts `Scripts/example_training_GANs.sh` for training Shallow ReLU GANs on 2D mixture of Gaussian datasets Grid and Random (first 2 commands, more datasets avaiable in `Synthetic_Dataset.py`), and for training DCGANs on MNIST (last 2 commands). The option `--alpha_mobility` and `--alpha_mobility_D` modify `alpha` of the generator and discriminator, respectively. And `--lazy` implements the lazy training scheme in [[1]](#1). These 3 options should be used combined.
 
 ```train
-python train.py --input-data <path_to_data> --alpha 10 --beta 20
+python Run_GAN_Training.py --z_dim 2 --z_std 1 --test_data_num 1024 --plot_lim_z 7 --plot_lim_x 2 --mog_std 0.01 --mog_scale 1 --data grid5 --opt_type rmsprop --divergence JS --method simgd --g_lr 0.001 --d_lr 0.001 --d_penalty 0 --g_hessian_reg 1 --d_hessian_reg 1 --iteration 400000 --plot_iter 4000 --seed 0 --arch mlp --g_layers 1 --g_hidden 32 --d_layers 1 --d_hidden 32 --rmsprop_init_1 --gamma 0.8 --save_param
 ```
 
->📋  Describe how to train the models, with example commands on how to train the models in your paper, including the full training procedure and appropriate hyperparameters.
+Use ``--save_param`` when you want to save the metrics of interest and NN parameters per `--plot_iter` iterations during training. Otherwise, only the initial and final values will be saved. The saved metrics of interest and NN parameters will be in folder `Data` if not specified by `--save_path`.
 
-## Evaluation
+## Computing Metrics
 
-To evaluate my model on ImageNet, run:
+To compute metrics, first move all results to be computed to a folder under `Summaries`, such as the provided folder `GAN_training_results_examples`. Then, refer to the command in `Scripts/example_computing_metrics.sh`. For example, run:
 
-```eval
-python eval.py --model-file mymodel.pth --benchmark imagenet
+```compute
+python Data_to_csv.py --task_type 2D --summary_dir Summaries --task_dir GAN_training_results_examples
 ```
 
->📋  Describe how to evaluate the trained models on benchmarks reported in the paper, give commands that produce the results (section below).
-
-## Pre-trained Models
-
-You can download pretrained models here:
-
-- [My awesome model](https://drive.google.com/mymodel.pth) trained on ImageNet using parameters x,y,z.
-
->📋  Give a link to where/how the pretrained models can be downloaded and how they were trained (if applicable).  Alternatively you can have an additional column in your results table with a link to the models.
-
-## Results
-
-Our model achieves the following performance on :
-
-### [Image Classification on ImageNet](https://paperswithcode.com/sota/image-classification-on-imagenet)
-
-| Model name         | Top 1 Accuracy  | Top 5 Accuracy |
-| ------------------ |---------------- | -------------- |
-| My awesome model   |     85%         |      95%       |
-
->📋  Include a table of results from your paper, and link back to the leaderboard for clarity and context. If your main result is a figure, include that figure and link to the command or notebook to reproduce it.
+Then, a file named `results.csv` with the initial and final values of metrics will appear in this task folder. For values of all available iterations, modify variable `only_last_t` in `Data_to_csv.py` to `False`.
 
 
-## Contributing
+## Plotting
 
->📋  Pick a licence and describe how to contribute to your code repository.
+To reproduce Fig.1a in paper, run
+
+```plot
+python Plot_experiments.py
+```
+
+## Causal Analysis
+To perform causal analysis and reproduce the plots for the distribution of marginal treatment effect (MTE) of each treatment shown in paper Fig. 5, run
+```causal
+python Causal_analysis.py
+```
+For retraining the DeepIV model, modify variable `load_deepIvEst_3_2` to `False`. Depending on the initial seed, the results can be slightly different.
+
+## References
+<a id="1">[1]</a> 
+Chizat, Lénaïc, Edouard Oyallon, and Francis Bach. "On Lazy Training in Differentiable Programming." Advances in Neural Information Processing Systems 32 (2019): 2937-2947.
