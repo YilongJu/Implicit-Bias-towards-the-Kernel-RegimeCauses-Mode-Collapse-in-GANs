@@ -1,5 +1,3 @@
->📋  A template README.md for code accompanying a Machine Learning paper
-
 # Implicit Bias towards the Kernel RegimeCauses Mode Collapse in GANs
 
 This repository is the official implementation of Implicit Bias towards the Kernel RegimeCauses Mode Collapse in GANs.
